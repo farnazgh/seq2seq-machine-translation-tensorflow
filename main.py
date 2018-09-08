@@ -15,9 +15,6 @@ from tensorflow.python.keras.preprocessing.sequence import pad_sequences
 # load data
 # ======================================================================
 
-# from keras.datasets import europarl
-
-# language_code='da'
 mark_start = 'ssss '
 mark_end = ' eeee'
 
@@ -30,28 +27,18 @@ with open('data/europarl-v7.da-en.en', 'r') as f:
     data_dest = [ mark_start+line.replace("\n", "")+mark_end for line in f]
 
 
-# idx = 8002
-# print(data_src[idx])
-# print(data_dest[idx])
-
 # tokenizer
 num_words = 10000
 
 class TokenizerWrap(Tokenizer):
-    """Wrap the Tokenizer-class from Keras with more functionality."""
     
     def __init__(self, texts, padding,
                  reverse=False, num_words=None):
-        """
-        :param texts: List of strings. This is the data-set.
-        :param padding: Either 'post' or 'pre' padding.
-        :param reverse: Boolean whether to reverse token-lists.
-        :param num_words: Max number of words to use.
-        """
+        
 
         Tokenizer.__init__(self, num_words=num_words)
 
-        #The Tokenizer stores everything in the word_index during fit_on_texts. Then, when calling the texts_to_sequences method, only the top num_words are considered.
+        
         # Create the vocabulary from the texts.
         self.fit_on_texts(texts)
 
@@ -59,68 +46,53 @@ class TokenizerWrap(Tokenizer):
         self.index_to_word = dict(zip(self.word_index.values(),self.word_index.keys()))
 
         # Convert all texts to lists of integer-tokens.
-        # Note that the sequences may have different lengths.
         self.tokens = self.texts_to_sequences(texts)
 
         if reverse:
-            # Reverse the token-sequences.
             self.tokens = [list(reversed(x)) for x in self.tokens]
         
-            # Sequences that are too long should now be truncated
-            # at the beginning, which corresponds to the end of
-            # the original sequences.
+            
             truncating = 'pre'
         else:
-            # Sequences that are too long should be truncated
-            # at the end.
+            
             truncating = 'post'
 
         # The number of integer-tokens in each sequence.
         self.num_tokens = [len(x) for x in self.tokens]
 
         # Max number of tokens to use in all sequences.
-        # We will pad / truncate all sequences to this length.
-        # This is a compromise so we save a lot of memory and
-        # only have to truncate maybe 5% of all the sequences.
         self.max_tokens = np.mean(self.num_tokens) \
                           + 2 * np.std(self.num_tokens)
         self.max_tokens = int(self.max_tokens)
 
-        # Pad / truncate all token-sequences to the given length.
-        # This creates a 2-dim numpy matrix that is easier to use.
+     
         self.tokens_padded = pad_sequences(self.tokens,
                                            maxlen=self.max_tokens,
                                            padding=padding,
                                            truncating=truncating)
 
     def token_to_word(self, token):
-        """Lookup a single word from an integer-token."""
+        
 
         word = " " if token == 0 else self.index_to_word[token]
         return word 
 
     def tokens_to_string(self, tokens):
-        """Convert a list of integer-tokens to a string."""
 
         # Create a list of the individual words.
         words = [self.index_to_word[token]
                  for token in tokens
                  if token != 0]
         
-        # Concatenate the words to a single string
-        # with space between all the words.
+       
         text = " ".join(words)
 
         return text
     
     def text_to_tokens(self, text, reverse=False, padding=False):
-        """
-        Convert a single text-string to tokens with optional
-        reversal and padding.
-        """
+       
 
-        # Convert to tokens. Note that we assume there is only
-        # a single text-string so we wrap it in a list.
+        # Convert to tokens. 
         tokens = self.texts_to_sequences([text])
         tokens = np.array(tokens)
 
@@ -128,13 +100,8 @@ class TokenizerWrap(Tokenizer):
             # Reverse the tokens.
             tokens = np.flip(tokens, axis=1)
 
-            # Sequences that are too long should now be truncated
-            # at the beginning, which corresponds to the end of
-            # the original sequences.
             truncating = 'pre'
         else:
-            # Sequences that are too long should be truncated
-            # at the end.
             truncating = 'post'
 
         if padding:
@@ -187,11 +154,9 @@ print(data_dest[idx])
 # training data
 # =============================================================
 
-#Now the data-set has been converted to sequences of integer-tokens and also padded and truncated(tokenizer_src and tokenizer_dest)
+encoder_input_data = tokens_src
 
-encoder_input_data = tokens_src#??????
 
-# The input and output data for the decoder is identical, except shifted one time-step
 decoder_input_data = tokens_dest[:, :-1]
 print(decoder_input_data.shape)
 
@@ -208,7 +173,6 @@ print(decoder_output_data[idx])
 # create neural network
 ## create encoder
 # ===============================================================
-# ---------------Input() is used to instantiate a Keras tensor
 encoder_input = Input(shape=(None, ), name='encoder_input')
  # the length of the vectors output by the embedding-layer
 embedding_size = 128
@@ -216,12 +180,12 @@ encoder_embedding = Embedding(input_dim=num_words,
                               output_dim=embedding_size,
                               name='encoder_embedding')
 # the size of the internal states of the Gated Recurrent Units (GRU)
-state_size = 512#?????
+state_size = 512
 #3 GRU layers 
 encoder_gru1 = GRU(state_size, name='encoder_gru1',return_sequences=True)
 encoder_gru2 = GRU(state_size, name='encoder_gru2',return_sequences=True)
 encoder_gru3 = GRU(state_size, name='encoder_gru3',return_sequences=False)
-#This helper-function connects all the layers of the encoder
+
 def connect_encoder():
     # Start the neural network with its input-layer.
     net = encoder_input
@@ -281,7 +245,7 @@ def connect_decoder(initial_state):
 decoder_output = connect_decoder(initial_state=encoder_output)
 
 model_train = Model(inputs=[encoder_input, decoder_input],
-                    outputs=[decoder_output]) #??????????????????????????????????
+                    outputs=[decoder_output]) 
 
 model_encoder = Model(inputs=[encoder_input],
                       outputs=[encoder_output])
@@ -293,28 +257,12 @@ model_decoder = Model(inputs=[decoder_input, decoder_initial_state],
 
 ##Loss Function
 def sparse_cross_entropy(y_true, y_pred):
-    """
-    Calculate the cross-entropy loss between y_true and y_pred.
-    
-    y_true is a 2-rank tensor with the desired output.
-    The shape is [batch_size, sequence_length] and it
-    contains sequences of integer-tokens.
-
-    y_pred is the decoder's output which is a 3-rank tensor
-    with shape [batch_size, sequence_length, num_words]
-    so that for each sequence in the batch there is a one-hot
-    encoded array of length num_words.
-    """
 
     # Calculate the loss. This outputs a
     # 2-rank tensor of shape [batch_size, sequence_length]
     loss = tf.nn.sparse_softmax_cross_entropy_with_logits(labels=y_true,
                                                           logits=y_pred)
 
-    # Keras may reduce this across the first axis (the batch)
-    # but the semantics are unclear, so to be sure we use
-    # the loss across the entire 2-rank tensor, we reduce it
-    # to a single scalar with the mean function.
     loss_mean = tf.reduce_mean(loss)
 
     return loss_mean
@@ -355,99 +303,61 @@ model_train.fit(x=x_data,
 # ==============================================================
 
 def translate(input_text, true_output_text=None):
-    """Translate a single text-string."""
 
     # Convert the input-text to integer-tokens.
-    # Note the sequence of tokens has to be reversed.
-    # Padding is probably not necessary.
     input_tokens = tokenizer_src.text_to_tokens(text=input_text,
                                                 reverse=True,
                                                 padding=True)
     
-    # Get the output of the encoder's GRU which will be
-    # used as the initial state in the decoder's GRU.
-    # This could also have been the encoder's final state
-    # but that is really only necessary if the encoder
-    # and decoder use the LSTM instead of GRU because
-    # the LSTM has two internal states.
+    
     initial_state = model_encoder.predict(input_tokens)
 
     # Max number of tokens / words in the output sequence.
     max_tokens = tokenizer_dest.max_tokens
 
-    # Pre-allocate the 2-dim array used as input to the decoder.
-    # This holds just a single sequence of integer-tokens,
-    # but the decoder-model expects a batch of sequences.
     shape = (1, max_tokens)
     decoder_input_data = np.zeros(shape=shape, dtype=np.int)
-
-    # The first input-token is the special start-token for 'ssss '.
+   
     token_int = token_start
 
-    # Initialize an empty output-text.
     output_text = ''
 
     # Initialize the number of tokens we have processed.
     count_tokens = 0
 
-    # While we haven't sampled the special end-token for ' eeee'
-    # and we haven't processed the max number of tokens.
     while token_int != token_end and count_tokens < max_tokens:
-        # Update the input-sequence to the decoder
-        # with the last token that was sampled.
-        # In the first iteration this will set the
-        # first element to the start-token.
+        
         decoder_input_data[0, count_tokens] = token_int
 
-        # Wrap the input-data in a dict for clarity and safety,
-        # so we are sure we input the data in the right order.
         x_data = \
         {
             'decoder_initial_state': initial_state,
             'decoder_input': decoder_input_data
         }
 
-        # Note that we input the entire sequence of tokens
-        # to the decoder. This wastes a lot of computation
-        # because we are only interested in the last input
-        # and output. We could modify the code to return
-        # the GRU-states when calling predict() and then
-        # feeding these GRU-states as well the next time
-        # we call predict(), but it would make the code
-        # much more complicated.
-
-        # Input this data to the decoder and get the predicted output.
         decoder_output = model_decoder.predict(x_data)
-
-        # Get the last predicted token as a one-hot encoded array.
-        token_onehot = decoder_output[0, count_tokens, :]
         
-        # Convert to an integer-token.
+        token_onehot = decoder_output[0, count_tokens, :]
         token_int = np.argmax(token_onehot)
-
-        # Lookup the word corresponding to this integer-token.
+        
         sampled_word = tokenizer_dest.token_to_word(token_int)
-
-        # Append the word to the output-text.
         output_text += " " + sampled_word
-
-        # Increment the token-counter.
         count_tokens += 1
 
     # Sequence of tokens output by the decoder.
     output_tokens = decoder_input_data[0]
     
-    # Print the input-text.
+    # Print the input-text
     print("Input text:")
     print(input_text)
     print()
 
-    # Print the translated output-text.
+    # Print the translated output-text
     print("Translated text:")
     print(output_text)
     print()
 
-    # Optionally print the true translated text.
+    # Optionally print the true translated text
     if true_output_text is not None:
         print("True output text:")
         print(true_output_text)

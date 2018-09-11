@@ -1,3 +1,5 @@
+#-------------
+#souce code: https://github.com/Hvass-Labs/TensorFlow-Tutorials
 
 #!/usr/bin/env python
 import tensorflow as tf

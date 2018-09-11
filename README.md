@@ -1,3 +1,4 @@
 # seq2seq-machine-translation-tensorflow
 
-reference: https://github.com/Hvass-Labs/TensorFlow-Tutorials
+seqence to sequence model for machine translation
+tensorflow , keras

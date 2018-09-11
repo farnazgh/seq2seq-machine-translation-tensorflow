@@ -1,7 +1,11 @@
-#-------------
+# -*- coding: utf-8 -*-
+"""
 #souce code: https://github.com/Hvass-Labs/TensorFlow-Tutorials
+"""
+
 
 #!/usr/bin/env python
+
 import tensorflow as tf
 import numpy as np
 import math
@@ -21,11 +25,11 @@ mark_start = 'ssss '
 mark_end = ' eeee'
 
 data_src = []
-with open('data/dialogue1', 'r') as f:
+with open('data/eng', 'r') as f:
     data_src = f.readlines()
 
 data_dest = []
-with open('data/dialogue2', 'r') as f:
+with open('data/fa', 'r') as f:
     data_dest = [ mark_start+line.replace("\n", "")+mark_end for line in f]
 
 
@@ -283,7 +287,7 @@ model_train.fit(x=x_data,
 # Translate Texts
 # ==============================================================
 
-def chatbot(input_text, true_output_text=None):
+def translate(input_text, true_output_text=None):
 
     # Convert the input-text to integer-tokens.
     input_tokens = tokenizer_src.text_to_tokens(text=input_text,
@@ -328,12 +332,12 @@ def chatbot(input_text, true_output_text=None):
     # Sequence of tokens output by the decoder.
     output_tokens = decoder_input_data[0]
     
-    # Print the user input
+    # Print the input text
     print("Input text:")
     print(input_text)
     print()
 
-    # Print the chatbot response
+    # Print the translated text
     print("Output text:")
     print(output_text)
     print()
@@ -347,5 +351,7 @@ def chatbot(input_text, true_output_text=None):
 
 
 
-chatbot(input_text="hi how are you",
-          true_output_text='thanks fine')
+translate(input_text="how are you",
+          true_output_text='خوب هستی')
+translate(input_text="I met her yesterday",
+          true_output_text='او را دیروز ملاقات کردم')

@@ -21,11 +21,11 @@ mark_start = 'ssss '
 mark_end = ' eeee'
 
 data_src = []
-with open('data/europarl-v7.da-en.da', 'r') as f:
+with open('data/dialogue1', 'r') as f:
     data_src = f.readlines()
 
 data_dest = []
-with open('data/europarl-v7.da-en.en', 'r') as f:
+with open('data/dialogue2', 'r') as f:
     data_dest = [ mark_start+line.replace("\n", "")+mark_end for line in f]
 
 
@@ -129,27 +129,10 @@ tokenizer_dest = TokenizerWrap(texts=data_dest,
 
 tokens_src = tokenizer_src.tokens_padded
 tokens_dest = tokenizer_dest.tokens_padded
-print(tokens_src.shape)
-print(tokens_dest.shape)
+
 
 token_start = tokenizer_dest.word_index[mark_start.strip()]
-print(token_start)
-
-
-
 token_end = tokenizer_dest.word_index[mark_end.strip()]
-print(token_end)
-
-# example of token seq
-print("example:")
-idx = 2
-print(tokens_src[idx])
-print(tokenizer_src.tokens_to_string(tokens_src[idx]))
-print(data_src[idx])
-
-print(tokens_dest[idx])
-print(tokenizer_dest.tokens_to_string(tokens_dest[idx]))
-print(data_dest[idx])
 
 
 
@@ -165,10 +148,6 @@ print(decoder_input_data.shape)
 decoder_output_data = tokens_dest[:, 1:]
 print(decoder_output_data.shape)
 
-print("example:")
-idx = 2
-print(decoder_input_data[idx])
-print(decoder_output_data[idx])
 
 
 
@@ -304,7 +283,7 @@ model_train.fit(x=x_data,
 # Translate Texts
 # ==============================================================
 
-def translate(input_text, true_output_text=None):
+def chatbot(input_text, true_output_text=None):
 
     # Convert the input-text to integer-tokens.
     input_tokens = tokenizer_src.text_to_tokens(text=input_text,
@@ -349,13 +328,13 @@ def translate(input_text, true_output_text=None):
     # Sequence of tokens output by the decoder.
     output_tokens = decoder_input_data[0]
     
-    # Print the input-text
+    # Print the user input
     print("Input text:")
     print(input_text)
     print()
 
-    # Print the translated output-text
-    print("Translated text:")
+    # Print the chatbot response
+    print("Output text:")
     print(output_text)
     print()
 
@@ -368,9 +347,5 @@ def translate(input_text, true_output_text=None):
 
 
 
-idx = 3
-translate(input_text=data_src[idx],
-          true_output_text=data_dest[idx])
-
-translate(input_text="der var engang et land der hed Danmark",
-          true_output_text='Once there was a country named Denmark')
+chatbot(input_text="hi how are you",
+          true_output_text='thanks fine')

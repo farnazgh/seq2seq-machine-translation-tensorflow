@@ -1,4 +1,4 @@
 # seq2seq-machine-translation-tensorflow
 
-seqence to sequence model for machine translation
-tensorflow , keras
+seqence to sequence model for dialoguw generation
+(tensorflow , keras)
